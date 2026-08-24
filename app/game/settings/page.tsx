@@ -3,17 +3,15 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGame, CharacterClass } from '@/lib/gameContext';
-import { AVATARS } from '@/components/CharacterCreationModal';
-import { Settings, User, RefreshCw, Volume2, Shield, Sparkles, CheckCircle2, Flame, Trophy, Upload, Image as ImageIcon } from 'lucide-react';
+import { CLASS_AVATARS } from '@/components/CharacterCreationModal';
+import { Settings, User, RefreshCw, Volume2, Shield, Sparkles, CheckCircle2, Flame, Trophy } from 'lucide-react';
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { isLoggedIn, name, characterClass, avatarId, customAvatarUrl, createOrUpdateCharacter, resetStats, statPoints, level, gold, clickPower, dps } = useGame();
+  const { isLoggedIn, name, characterClass, createOrUpdateCharacter, resetStats, statPoints, level, gold, clickPower, dps } = useGame();
 
   const [charName, setCharName] = useState(name);
   const [selectedClass, setSelectedClass] = useState<CharacterClass>(characterClass);
-  const [selectedAvatar, setSelectedAvatar] = useState<string>(avatarId);
-  const [uploadedPhoto, setUploadedPhoto] = useState<string | null>(customAvatarUrl || null);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
 
@@ -22,55 +20,56 @@ export default function SettingsPage() {
     return null;
   }
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64 = reader.result as string;
-      setUploadedPhoto(base64);
-      setSelectedAvatar('av_custom');
-    };
-    reader.readAsDataURL(file);
-  };
+  const currentAvatarInfo = CLASS_AVATARS.find((c) => c.className === selectedClass) || CLASS_AVATARS[0];
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
-    createOrUpdateCharacter(charName.trim(), selectedClass, selectedAvatar, selectedAvatar === 'av_custom' ? uploadedPhoto : null);
+    const trimmed = charName.trim();
+    if (trimmed.length < 2) return;
+
+    const avatarId = `av_${selectedClass.toLowerCase()}`;
+    createOrUpdateCharacter(trimmed, selectedClass, avatarId, currentAvatarInfo.image);
     setSaveSuccess(true);
     setTimeout(() => setSaveSuccess(false), 3000);
   };
-
-  const classesList: { name: CharacterClass; bonus: string }[] = [
-    { name: 'Guerreiro', bonus: '+Força & +Vitalidade' },
-    { name: 'Mago', bonus: '+Inteligência & +Energia' },
-    { name: 'Arqueiro', bonus: '+Agilidade & +Crítico' },
-    { name: 'Paladino', bonus: '+Vitalidade & +Defesa' }
-  ];
 
   return (
     <div className="space-y-6">
       {/* Title */}
       <div className="pb-3 border-b border-[#3a2810]">
         <h1 className="font-cinzel text-2xl font-bold text-[#ffe082] flex items-center gap-2">
-          <Settings className="w-6 h-6 text-amber-400" /> Configurações do Herói & Perfil
+          <Settings className="w-6 h-6 text-amber-400" /> Configurações do Herói & Perfil D&D
         </h1>
-        <p className="text-xs text-[#8a7852]">Altere seu nome, troque de avatar ou envie uma foto do computador, resete pontos de atributo e ajuste preferências de jogo.</p>
+        <p className="text-xs text-[#8a7852]">Altere seu nome, troque de classe para carregar o retrato D&D correspondente e resete pontos de atributo.</p>
       </div>
 
       {saveSuccess && (
-        <div className="p-3 rounded-lg bg-emerald-950/50 border border-emerald-700 text-emerald-300 text-xs font-bold flex items-center gap-2 animate-bounce">
-          <CheckCircle2 className="w-4 h-4" /> Perfil e Foto do Avatar salvos com sucesso!
+        <div className="p-3 rounded-lg bg-emerald-950/70 border border-emerald-700 text-emerald-200 text-xs font-bold flex items-center gap-2 animate-pulse">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Perfil e Retrato D&D atualizados com sucesso!
         </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Profile & Avatar Editing Form */}
+        {/* Profile & Class D&D Selection Form */}
         <div className="md:col-span-2 medieval-card p-5 space-y-4">
           <h2 className="font-cinzel text-base font-bold text-[#ffe082] pb-2 border-b border-[#3a2810] flex items-center gap-2">
-            <User className="w-5 h-5 text-amber-400" /> Escolha sua Foto ou Avatar
+            <User className="w-5 h-5 text-amber-400" /> Editar Perfil & Classe D&D
           </h2>
+
+          {/* D&D Class Avatar Preview */}
+          <div className="flex items-center gap-4 p-4 rounded-xl bg-[#060403] border border-[#816835]">
+            <div className="w-20 h-20 rounded-full border-2 border-amber-400 shadow-[0_0_15px_rgba(200,151,42,0.4)] overflow-hidden">
+              <img src={currentAvatarInfo.image} alt={currentAvatarInfo.className} className="w-full h-full object-cover" />
+            </div>
+            <div>
+              <div className="font-cinzel text-sm font-bold text-[#ffe082] flex items-center gap-1.5">
+                <span>{currentAvatarInfo.icon}</span>
+                <span>Retrato D&D: {currentAvatarInfo.className}</span>
+              </div>
+              <p className="text-[11px] text-[#8a7852] mt-0.5">{currentAvatarInfo.desc}</p>
+              <div className="text-[10px] text-amber-400 font-semibold mt-1">{currentAvatarInfo.bonus}</div>
+            </div>
+          </div>
 
           <form onSubmit={handleSaveProfile} className="space-y-4">
             {/* Nome do Personagem */}
@@ -86,69 +85,29 @@ export default function SettingsPage() {
               />
             </div>
 
-            {/* Upload de Foto Personalizada */}
-            <div className="medieval-card p-3 bg-[#060403] border-dashed border-[#816835]">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  {uploadedPhoto ? (
-                    <img src={uploadedPhoto} alt="Foto Personalizada" className="w-14 h-14 rounded-full border-2 border-amber-400 object-cover shadow-md" />
-                  ) : (
-                    <div className="w-14 h-14 rounded-full bg-[#150f08] border border-[#3a2810] flex items-center justify-center text-amber-400">
-                      <ImageIcon className="w-6 h-6" />
-                    </div>
-                  )}
-                  <div>
-                    <div className="font-cinzel text-xs font-bold text-[#ffe082]">Foto Personalizada</div>
-                    <p className="text-[10px] text-[#8a7852]">Carregue uma imagem/foto do seu dispositivo</p>
-                  </div>
-                </div>
-
-                <label className="medieval-btn text-xs py-1.5 px-3 cursor-pointer flex items-center gap-1.5">
-                  <Upload className="w-3.5 h-3.5" />
-                  <span>Enviar Foto</span>
-                  <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
-                </label>
-              </div>
-            </div>
-
-            {/* Galeria de Avatares Predefinidos */}
+            {/* Seleção de Classe D&D */}
             <div>
-              <label className="block text-xs font-cinzel font-bold text-[#d4c59a] mb-2">Ou selecione um Retrato Medieval:</label>
-              <div className="grid grid-cols-4 gap-2">
-                {AVATARS.map((av) => (
-                  <div
-                    key={av.id}
-                    onClick={() => setSelectedAvatar(av.id)}
-                    className={`p-2.5 rounded-lg bg-[#060403] border text-center cursor-pointer transition-all ${
-                      selectedAvatar === av.id
-                        ? `${av.border} bg-[#2a1e08] shadow-[0_0_12px_rgba(200,151,42,0.4)] scale-105`
-                        : 'border-[#3a2810] hover:border-[#816835]'
-                    }`}
-                  >
-                    <div className="text-2xl mb-1">{av.emoji}</div>
-                    <div className="text-[9px] font-bold text-[#8a7852] truncate">{av.name}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Seleção de Classe */}
-            <div>
-              <label className="block text-xs font-cinzel font-bold text-[#d4c59a] mb-2">Classe Principal</label>
+              <label className="block text-xs font-cinzel font-bold text-[#d4c59a] mb-2">Escolha a Classe & Retrato D&D</label>
               <div className="grid grid-cols-2 gap-2">
-                {classesList.map((c) => (
+                {CLASS_AVATARS.map((c) => (
                   <button
                     type="button"
-                    key={c.name}
-                    onClick={() => setSelectedClass(c.name)}
-                    className={`p-2 rounded border text-left transition-all ${
-                      selectedClass === c.name
-                        ? 'bg-[#2a1e08] border-[#f0a830] text-[#ffe082]'
-                        : 'bg-[#060403] border-[#3a2810] text-[#8a7852]'
+                    key={c.className}
+                    onClick={() => setSelectedClass(c.className)}
+                    className={`p-2.5 rounded-lg border text-left transition-all flex items-center gap-2.5 ${
+                      selectedClass === c.className
+                        ? 'bg-[#2a1e08] border-[#f0a830] text-[#ffe082] shadow-[0_0_10px_rgba(200,151,42,0.3)]'
+                        : 'bg-[#060403] border-[#3a2810] text-[#8a7852] hover:border-[#816835]'
                     }`}
                   >
-                    <div className="font-cinzel font-bold text-xs">{c.name}</div>
-                    <div className="text-[9px] text-[#c8892a]">{c.bonus}</div>
+                    <img src={c.image} alt={c.className} className="w-8 h-8 rounded-full object-cover border border-[#816835]" />
+                    <div>
+                      <div className="font-cinzel font-bold text-xs flex items-center gap-1">
+                        <span>{c.icon}</span>
+                        <span>{c.className}</span>
+                      </div>
+                      <div className="text-[9px] text-[#c8972a] font-semibold">{c.bonus}</div>
+                    </div>
                   </button>
                 ))}
               </div>
@@ -156,7 +115,7 @@ export default function SettingsPage() {
 
             <div className="pt-2">
               <button type="submit" className="medieval-btn text-xs py-2.5 px-6">
-                Salvar Foto e Perfil
+                Salvar Alterações de Perfil
               </button>
             </div>
           </form>
@@ -188,8 +147,8 @@ export default function SettingsPage() {
               <span className="text-[#8a7852]">Efeitos Visuais e Sons</span>
               <button
                 onClick={() => setSoundEnabled(!soundEnabled)}
-                className={`px-3 py-1 rounded text-[10px] font-bold border ${
-                  soundEnabled ? 'bg-emerald-950 border-emerald-700 text-emerald-300' : 'bg-gray-900 border-gray-700 text-gray-400'
+                className={`px-3 py-1 rounded text-[10px] font-bold border transition-colors ${
+                  soundEnabled ? 'bg-emerald-950 border-emerald-700 text-emerald-200' : 'bg-gray-900 border-gray-700 text-slate-300'
                 }`}
               >
                 {soundEnabled ? 'Ativado' : 'Desativado'}

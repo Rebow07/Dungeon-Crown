@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGame } from '@/lib/gameContext';
-import { AVATARS, CharacterCreationModal } from '@/components/CharacterCreationModal';
+import { CLASS_AVATARS, CharacterCreationModal } from '@/components/CharacterCreationModal';
 import { Shield, Swords, Plus, Heart, Zap, Award, Sparkles, Coffee, Backpack, Flame, RefreshCw, Play, Square, Camera, Edit } from 'lucide-react';
 
 export default function GameDashboard() {
@@ -12,7 +12,6 @@ export default function GameDashboard() {
     isLoggedIn,
     name,
     characterClass,
-    avatarId,
     customAvatarUrl,
     level,
     exp,
@@ -42,7 +41,7 @@ export default function GameDashboard() {
   }
 
   const expPercent = Math.min(100, Math.max(0, (exp / maxExp) * 100));
-  const selectedPreset = AVATARS.find((a) => a.id === avatarId);
+  const avatarSrc = customAvatarUrl || `/avatars/${characterClass.toLowerCase()}.png`;
 
   const renderStatBox = (statKey: 'str' | 'agi' | 'vit' | 'int', title: string, code: string, desc: string) => {
     const val = stats[statKey];
@@ -84,23 +83,15 @@ export default function GameDashboard() {
 
         <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
           <div className="flex items-center gap-4">
-            {/* Avatar Photo Display */}
+            {/* D&D Class Avatar Display */}
             <div
               onClick={() => setIsModalOpen(true)}
-              className="relative w-16 h-16 rounded-full bg-gradient-to-br from-[#c8972a] via-[#f0a830] to-[#8338ec] p-1 shadow-[0_0_20px_rgba(200,151,42,0.4)] cursor-pointer group transition-transform hover:scale-105"
-              title="Clique para alterar foto ou avatar"
+              className="relative w-16 h-16 rounded-full bg-gradient-to-br from-[#c8972a] via-[#f0a830] to-[#8338ec] p-1 shadow-[0_0_20px_rgba(200,151,42,0.4)] cursor-pointer group transition-transform hover:scale-105 overflow-hidden"
+              title="Clique para alterar a classe ou nome do herói"
             >
-              <div className="w-full h-full bg-[#150f08] rounded-full overflow-hidden flex items-center justify-center text-3xl">
-                {customAvatarUrl ? (
-                  <img src={customAvatarUrl} alt={name} className="w-full h-full object-cover rounded-full" />
-                ) : selectedPreset ? (
-                  <span>{selectedPreset.emoji}</span>
-                ) : (
-                  <span>⚔️</span>
-                )}
-              </div>
+              <img src={avatarSrc} alt={name} className="w-full h-full object-cover rounded-full" />
               <div className="absolute bottom-0 right-0 p-1 rounded-full bg-[#c8972a] text-black shadow-md">
-                <Camera className="w-3 h-3" />
+                <Edit className="w-3 h-3" />
               </div>
             </div>
 
@@ -126,7 +117,7 @@ export default function GameDashboard() {
               onClick={() => setIsModalOpen(true)}
               className="medieval-btn-outline text-xs py-2 px-3 flex items-center gap-1.5"
             >
-              <Camera className="w-3.5 h-3.5 text-amber-400" /> Alterar Foto / Avatar
+              <Edit className="w-3.5 h-3.5 text-amber-400" /> Alterar Classe / Herói
             </button>
 
             <button

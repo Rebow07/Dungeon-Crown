@@ -2,24 +2,45 @@
 
 import React, { useState } from 'react';
 import { useGame, CharacterClass } from '@/lib/gameContext';
-import { UserCheck, Shield, Sparkles, Flame, CheckCircle2, User, Upload, Image as ImageIcon } from 'lucide-react';
+import { UserCheck, Shield, Sparkles, Flame, CheckCircle2, User } from 'lucide-react';
 
-export interface AvatarOption {
-  id: string;
-  name: string;
-  emoji: string;
-  border: string;
+export interface ClassAvatarInfo {
+  className: CharacterClass;
+  image: string;
+  desc: string;
+  icon: string;
+  bonus: string;
 }
 
-export const AVATARS: AvatarOption[] = [
-  { id: 'av_paladin', name: 'Paladino Dourado', emoji: '🛡️', border: 'border-amber-500' },
-  { id: 'av_mage', name: 'Arquimago Arcano', emoji: '🔮', border: 'border-[#8338ec]' },
-  { id: 'av_archer', name: 'Caçadora Élfica', emoji: '🏹', border: 'border-emerald-500' },
-  { id: 'av_warrior', name: 'Berserker Nórdico', emoji: '⚔️', border: 'border-red-500' },
-  { id: 'av_priest', name: 'Paladino Sagrado', emoji: '✝️', border: 'border-yellow-400' },
-  { id: 'av_assassin', name: 'Assassina da Sombra', emoji: '🗡️', border: 'border-purple-600' },
-  { id: 'av_druid', name: 'Druida Ancestral', emoji: '🌿', border: 'border-teal-500' },
-  { id: 'av_king', name: 'Rei Corado', emoji: '👑', border: 'border-amber-400' }
+export const CLASS_AVATARS: ClassAvatarInfo[] = [
+  {
+    className: 'Guerreiro',
+    image: '/avatars/guerreiro.png',
+    desc: 'Mestre do combate pesado com armadura de placas e espada rúnica.',
+    icon: '⚔️',
+    bonus: '+Força & +Vitalidade'
+  },
+  {
+    className: 'Mago',
+    image: '/avatars/mago.png',
+    desc: 'Manipula feitiços arcanos devastadores e runas cósmicas.',
+    icon: '🔮',
+    bonus: '+Inteligência & +Energia'
+  },
+  {
+    className: 'Arqueiro',
+    image: '/avatars/arqueiro.png',
+    desc: 'Atacante veloz com arco éfico e alta taxa de acertos críticos.',
+    icon: '🏹',
+    bonus: '+Agilidade & +Crítico'
+  },
+  {
+    className: 'Paladino',
+    image: '/avatars/paladino.png',
+    desc: 'Defensor sagrado com escudo radiante e magias de luz.',
+    icon: '🛡️',
+    bonus: '+Vitalidade & +Defesa'
+  }
 ];
 
 interface Props {
@@ -28,41 +49,15 @@ interface Props {
 }
 
 export const CharacterCreationModal: React.FC<Props> = ({ isOpen, onClose }) => {
-  const { name, characterClass, avatarId, customAvatarUrl, createOrUpdateCharacter } = useGame();
+  const { name, characterClass, createOrUpdateCharacter } = useGame();
 
   const [charName, setCharName] = useState(name || 'Loureiro');
   const [selectedClass, setSelectedClass] = useState<CharacterClass>(characterClass || 'Guerreiro');
-  const [selectedAvatar, setSelectedAvatar] = useState<string>(avatarId || 'av_paladin');
-  const [uploadedPhoto, setUploadedPhoto] = useState<string | null>(customAvatarUrl || null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
-  const classesList: { name: CharacterClass; desc: string; icon: string; bonus: string }[] = [
-    { name: 'Guerreiro', desc: 'Mestre no combate corpo a corpo com alta resistência.', icon: '⚔️', bonus: '+Força & +Vitalidade' },
-    { name: 'Mago', desc: 'Manipula feitiços devastadores de longa distância.', icon: '🔮', bonus: '+Inteligência & +Energia' },
-    { name: 'Arqueiro', desc: 'Atacante veloz com alta taxa de acertos críticos.', icon: '🏹', bonus: '+Agilidade & +Crítico' },
-    { name: 'Paladino', desc: 'Defensor sagrado com ótimo equilíbrio de defesa e HP.', icon: '🛡️', bonus: '+Vitalidade & +Defesa' }
-  ];
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 5 * 1024 * 1024) {
-      setErrorMsg('A foto deve ser menor que 5MB.');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64 = reader.result as string;
-      setUploadedPhoto(base64);
-      setSelectedAvatar('av_custom');
-      setErrorMsg(null);
-    };
-    reader.readAsDataURL(file);
-  };
+  const currentAvatarInfo = CLASS_AVATARS.find((c) => c.className === selectedClass) || CLASS_AVATARS[0];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,7 +67,8 @@ export const CharacterCreationModal: React.FC<Props> = ({ isOpen, onClose }) => 
       return;
     }
     setErrorMsg(null);
-    createOrUpdateCharacter(trimmed, selectedClass, selectedAvatar, selectedAvatar === 'av_custom' ? uploadedPhoto : null);
+    const avatarId = `av_${selectedClass.toLowerCase()}`;
+    createOrUpdateCharacter(trimmed, selectedClass, avatarId, currentAvatarInfo.image);
     onClose();
   };
 
@@ -81,9 +77,9 @@ export const CharacterCreationModal: React.FC<Props> = ({ isOpen, onClose }) => 
       <div className="medieval-card w-full max-w-lg p-6 animate-auth-glow space-y-5 my-8">
         <div className="text-center pb-3 border-b border-[#3a2810]">
           <h2 className="font-cinzel text-xl font-bold text-[#ffe082] flex items-center justify-center gap-2">
-            <User className="w-5 h-5 text-amber-400" /> Escolha sua Foto / Avatar
+            <User className="w-5 h-5 text-amber-400" /> Criar Herói estilo D&D
           </h2>
-          <p className="text-xs text-[#8a7852]">Selecione um retrato medieval ou envie uma foto personalizada do seu dispositivo.</p>
+          <p className="text-xs text-[#8a7852]">Escolha o nome de batalha e a classe para carregar a ilustração D&D oficial.</p>
         </div>
 
         {errorMsg && (
@@ -91,6 +87,18 @@ export const CharacterCreationModal: React.FC<Props> = ({ isOpen, onClose }) => 
             ⚠️ {errorMsg}
           </div>
         )}
+
+        {/* Selected Class Avatar D&D Preview */}
+        <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-[#060403] border border-[#816835] text-center">
+          <div className="w-24 h-24 rounded-full border-2 border-amber-400 shadow-[0_0_20px_rgba(200,151,42,0.5)] overflow-hidden mb-2">
+            <img src={currentAvatarInfo.image} alt={currentAvatarInfo.className} className="w-full h-full object-cover" />
+          </div>
+          <div className="font-cinzel text-sm font-bold text-[#ffe082] flex items-center gap-1.5">
+            <span>{currentAvatarInfo.icon}</span>
+            <span>Avatar D&D: {currentAvatarInfo.className}</span>
+          </div>
+          <p className="text-[10px] text-[#8a7852] mt-0.5 max-w-xs">{currentAvatarInfo.desc}</p>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Nome do Personagem */}
@@ -110,72 +118,29 @@ export const CharacterCreationModal: React.FC<Props> = ({ isOpen, onClose }) => 
             />
           </div>
 
-          {/* Upload de Foto Personalizada */}
-          <div className="medieval-card p-3 bg-[#060403] border-dashed border-[#816835]">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {uploadedPhoto ? (
-                  <img src={uploadedPhoto} alt="Foto Personalizada" className="w-12 h-12 rounded-full border-2 border-amber-400 object-cover shadow-md" />
-                ) : (
-                  <div className="w-12 h-12 rounded-full bg-[#150f08] border border-[#3a2810] flex items-center justify-center text-amber-400">
-                    <ImageIcon className="w-6 h-6" />
-                  </div>
-                )}
-                <div>
-                  <div className="font-cinzel text-xs font-bold text-[#ffe082]">Foto Personalizada</div>
-                  <p className="text-[10px] text-[#8a7852]">Envie uma imagem do seu dispositivo (PNG/JPG)</p>
-                </div>
-              </div>
-
-              <label className="medieval-btn text-xs py-1.5 px-3 cursor-pointer flex items-center gap-1.5">
-                <Upload className="w-3.5 h-3.5" />
-                <span>Enviar Foto</span>
-                <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
-              </label>
-            </div>
-          </div>
-
-          {/* Galeria de Avatares Predefinidos */}
+          {/* Seleção de Classe D&D */}
           <div>
-            <label className="block text-xs font-cinzel font-bold text-[#d4c59a] mb-2">Ou escolha um Retrato Medieval:</label>
-            <div className="grid grid-cols-4 gap-2">
-              {AVATARS.map((av) => (
-                <div
-                  key={av.id}
-                  onClick={() => setSelectedAvatar(av.id)}
-                  className={`p-2.5 rounded-lg bg-[#060403] border text-center cursor-pointer transition-all ${
-                    selectedAvatar === av.id
-                      ? `${av.border} bg-[#2a1e08] shadow-[0_0_12px_rgba(200,151,42,0.4)] scale-105`
-                      : 'border-[#3a2810] hover:border-[#816835]'
-                  }`}
-                >
-                  <div className="text-2xl mb-1">{av.emoji}</div>
-                  <div className="text-[9px] font-bold text-[#8a7852] truncate">{av.name}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Seleção de Classe */}
-          <div>
-            <label className="block text-xs font-cinzel font-bold text-[#d4c59a] mb-2">Classe de Batalha</label>
+            <label className="block text-xs font-cinzel font-bold text-[#d4c59a] mb-2">Escolha a Classe & Retrato D&D</label>
             <div className="grid grid-cols-2 gap-2">
-              {classesList.map((c) => (
+              {CLASS_AVATARS.map((c) => (
                 <button
                   type="button"
-                  key={c.name}
-                  onClick={() => setSelectedClass(c.name)}
-                  className={`p-2.5 rounded border text-left transition-all ${
-                    selectedClass === c.name
-                      ? 'bg-[#2a1e08] border-[#f0a830] text-[#ffe082] shadow-[0_0_10px_rgba(200,151,42,0.3)]'
+                  key={c.className}
+                  onClick={() => setSelectedClass(c.className)}
+                  className={`p-2.5 rounded-lg border text-left transition-all flex items-center gap-2.5 ${
+                    selectedClass === c.className
+                      ? 'bg-[#2a1e08] border-[#f0a830] text-[#ffe082] shadow-[0_0_12px_rgba(200,151,42,0.4)]'
                       : 'bg-[#060403] border-[#3a2810] text-[#8a7852] hover:border-[#816835]'
                   }`}
                 >
-                  <div className="flex items-center gap-1.5 font-cinzel font-bold text-xs">
-                    <span>{c.icon}</span>
-                    <span>{c.name}</span>
+                  <img src={c.image} alt={c.className} className="w-9 h-9 rounded-full object-cover border border-[#816835]" />
+                  <div>
+                    <div className="font-cinzel font-bold text-xs flex items-center gap-1">
+                      <span>{c.icon}</span>
+                      <span>{c.className}</span>
+                    </div>
+                    <div className="text-[9px] text-[#c8972a] font-semibold">{c.bonus}</div>
                   </div>
-                  <div className="text-[10px] text-[#c8972a] mt-1 font-semibold">{c.bonus}</div>
                 </button>
               ))}
             </div>
@@ -186,7 +151,7 @@ export const CharacterCreationModal: React.FC<Props> = ({ isOpen, onClose }) => 
               Cancelar
             </button>
             <button type="submit" className="medieval-btn text-xs py-2 px-6">
-              <UserCheck className="w-4 h-4" /> Salvar Herói
+              <UserCheck className="w-4 h-4" /> Confirmar Herói
             </button>
           </div>
         </form>

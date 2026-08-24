@@ -68,7 +68,7 @@ export default function RankingPage() {
 
         {/* 1st Place */}
         <div className="medieval-card p-4 text-center border-amber-500 shadow-[0_0_20px_rgba(240,168,48,0.3)] bg-gradient-to-b from-[#2a1e08] to-[#150f08]">
-          <Crown className="w-6 h-6 text-amber-400 mx-auto mb-1 animate-bounce" />
+          <Crown className="w-6 h-6 text-amber-400 mx-auto mb-1 animate-pulse" />
           <div className="font-cinzel text-sm font-bold text-[#ffe082]">{leaderboard[0].name}</div>
           <div className="text-[10px] text-amber-300 font-semibold">Lvl {leaderboard[0].level} • {leaderboard[0].charClass}</div>
           <div className="mt-2 text-sm font-bold text-amber-400">{leaderboard[0].combatPower} CP</div>
@@ -103,7 +103,7 @@ export default function RankingPage() {
                   key={player.rank}
                   className={`transition-colors ${
                     player.isCurrentPlayer
-                      ? 'bg-amber-950/40 font-bold border-l-4 border-l-amber-400 text-[#ffe082]'
+                      ? 'bg-[#2a1e08] font-bold border border-[#816835] text-[#ffe082]'
                       : 'hover:bg-[#1a1208] text-[#d4c59a]'
                   }`}
                 >

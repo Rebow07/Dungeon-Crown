@@ -2,19 +2,18 @@
 
 import React from 'react';
 import { useGame } from '@/lib/gameContext';
-import { AVATARS } from '@/components/CharacterCreationModal';
 import { Shield, Heart, Zap, Coins, Gem, LogOut, Crown, User } from 'lucide-react';
 import Link from 'next/link';
 
 export const Navbar: React.FC = () => {
-  const { isLoggedIn, name, level, hp, maxHp, energy, maxEnergy, gold, gems, characterClass, avatarId, customAvatarUrl, equippedPet, logout } = useGame();
+  const { isLoggedIn, name, level, hp, maxHp, energy, maxEnergy, gold, gems, characterClass, customAvatarUrl, equippedPet, logout } = useGame();
 
   if (!isLoggedIn) return null;
 
   const hpPercent = Math.min(100, Math.max(0, (hp / maxHp) * 100));
   const energyPercent = Math.min(100, Math.max(0, (energy / maxEnergy) * 100));
 
-  const selectedPreset = AVATARS.find((a) => a.id === avatarId);
+  const avatarSrc = customAvatarUrl || `/avatars/${characterClass.toLowerCase()}.png`;
 
   return (
     <header className="sticky top-0 z-50 bg-[#060403]/95 border-b border-[#3a2810] backdrop-blur-md px-4 py-2.5 shadow-2xl">
@@ -22,15 +21,7 @@ export const Navbar: React.FC = () => {
         {/* Brand & Character Avatar */}
         <Link href="/game" className="flex items-center gap-2.5 group">
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#c8972a] via-[#f0a830] to-[#8338ec] p-0.5 shadow-[0_0_15px_rgba(200,151,42,0.4)] transition-all overflow-hidden flex items-center justify-center">
-            {customAvatarUrl ? (
-              <img src={customAvatarUrl} alt={name} className="w-full h-full rounded-full object-cover" />
-            ) : selectedPreset ? (
-              <span className="text-xl">{selectedPreset.emoji}</span>
-            ) : (
-              <div className="w-full h-full bg-[#150f08] rounded-full flex items-center justify-center text-[#ffe082]">
-                <Crown className="w-5 h-5 text-amber-400" />
-              </div>
-            )}
+            <img src={avatarSrc} alt={name} className="w-full h-full rounded-full object-cover" />
           </div>
           <div>
             <div className="flex items-center gap-2 font-cinzel font-bold text-sm text-[#ffe082] tracking-wider">
