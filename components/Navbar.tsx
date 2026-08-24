@@ -11,7 +11,7 @@ export const Navbar: React.FC = () => {
   const pathname = usePathname();
   const { isLoggedIn, name, level, hp, maxHp, energy, maxEnergy, gold, gems, characterClass, customAvatarUrl, equippedPet, logout } = useGame();
 
-  // Global Numeric Navigation Shortcuts (1-9)
+  // Global Universal Keyboard Shortcuts across all screens
   useEffect(() => {
     if (!isLoggedIn) return;
 
@@ -20,9 +20,31 @@ export const Navbar: React.FC = () => {
       if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
 
       const code = e.code;
-      const key = e.key;
+      const key = e.key ? e.key.toLowerCase() : '';
 
-      if (code === 'Digit1' || key === '1') router.push('/game');
+      // Direct Letter Hotkeys (C, T, D, H, M, I, F, R, S)
+      if (code === 'KeyC' || key === 'c') {
+        if (pathname !== '/game/hunt') router.push('/game/hunt');
+      } else if (code === 'KeyT' || key === 't') {
+        if (pathname !== '/game/taverna') router.push('/game/taverna');
+      } else if (code === 'KeyD' || key === 'd') {
+        if (pathname !== '/game/dungeons') router.push('/game/dungeons');
+      } else if (code === 'KeyH' || key === 'h') {
+        if (pathname !== '/game') router.push('/game');
+      } else if (code === 'KeyM' || key === 'm') {
+        if (pathname !== '/game/shop') router.push('/game/shop');
+      } else if (code === 'KeyI' || key === 'i') {
+        if (pathname !== '/game/inventory') router.push('/game/inventory');
+      } else if (code === 'KeyF' || key === 'f') {
+        if (pathname !== '/game/forge') router.push('/game/forge');
+      } else if (code === 'KeyR' || key === 'r') {
+        if (pathname !== '/game/ranking') router.push('/game/ranking');
+      } else if (code === 'KeyS' || key === 's') {
+        if (pathname !== '/game/settings') router.push('/game/settings');
+      }
+
+      // Numeric Hotkeys (1-9)
+      else if (code === 'Digit1' || key === '1') router.push('/game');
       else if (code === 'Digit2' || key === '2') router.push('/game/hunt');
       else if (code === 'Digit3' || key === '3') router.push('/game/dungeons');
       else if (code === 'Digit4' || key === '4') router.push('/game/taverna');
@@ -35,7 +57,7 @@ export const Navbar: React.FC = () => {
 
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [isLoggedIn, router]);
+  }, [isLoggedIn, router, pathname]);
 
   if (!isLoggedIn) return null;
 
@@ -45,7 +67,7 @@ export const Navbar: React.FC = () => {
   const avatarSrc = customAvatarUrl || `/avatars/${characterClass.toLowerCase()}.png`;
 
   return (
-    <header className="sticky top-0 z-50 bg-[#060403]/95 border-b border-[#3a2810] backdrop-blur-md px-4 py-2.5 shadow-2xl">
+    <header className="sticky top-0 z-50 bg-[#060403]/95 border-b border-[#3a2810] backdrop-blur-md px-4 py-2 shadow-2xl space-y-1.5">
       <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3">
         {/* Brand & Character Avatar */}
         <Link href="/game" className="flex items-center gap-2.5 group">
@@ -122,6 +144,29 @@ export const Navbar: React.FC = () => {
           >
             <LogOut className="w-4 h-4" />
           </button>
+        </div>
+      </div>
+
+      {/* Global Quick Hotkeys Ribbon Helper */}
+      <div className="max-w-6xl mx-auto flex items-center justify-between text-[10px] text-[#8a7852] font-semibold bg-[#150f08]/80 px-2 py-0.5 rounded border border-[#3a2810] overflow-x-auto">
+        <div className="flex items-center gap-2 whitespace-nowrap">
+          <Keyboard className="w-3 h-3 text-amber-400 shrink-0" />
+          <span>Atalhos Globais:</span>
+          <span className="text-[#ffe082]"><kbd className="px-1 bg-[#3a2810] rounded text-amber-300 border border-[#816835]">C</kbd> Caça</span>
+          <span>•</span>
+          <span className="text-[#ffe082]"><kbd className="px-1 bg-[#3a2810] rounded text-amber-300 border border-[#816835]">T</kbd> Taverna</span>
+          <span>•</span>
+          <span className="text-[#ffe082]"><kbd className="px-1 bg-[#3a2810] rounded text-amber-300 border border-[#816835]">D</kbd> Masmorras</span>
+          <span>•</span>
+          <span className="text-[#ffe082]"><kbd className="px-1 bg-[#3a2810] rounded text-amber-300 border border-[#816835]">H</kbd> Herói</span>
+          <span>•</span>
+          <span className="text-[#ffe082]"><kbd className="px-1 bg-[#3a2810] rounded text-amber-300 border border-[#816835]">M</kbd> Mercado</span>
+          <span>•</span>
+          <span className="text-[#ffe082]"><kbd className="px-1 bg-[#3a2810] rounded text-amber-300 border border-[#816835]">I</kbd> Inventário</span>
+          <span>•</span>
+          <span className="text-[#ffe082]"><kbd className="px-1 bg-[#3a2810] rounded text-amber-300 border border-[#816835]">F</kbd> Forja</span>
+          <span>•</span>
+          <span className="text-[#ffe082]"><kbd className="px-1 bg-[#3a2810] rounded text-amber-300 border border-[#816835]">R</kbd> Ranking</span>
         </div>
       </div>
     </header>
