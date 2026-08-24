@@ -43,15 +43,22 @@ export const D20Dice: React.FC<D20DiceProps> = ({ onRollComplete, disabled }) =>
     }, 80);
   }, [isRolling, disabled, onRollComplete]);
 
-  // Keyboard Accessibility: Spacebar & Enter Key Shortcut
+  // Robust Universal Keyboard Listener for Spacebar and Enter
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.code === 'Space' || e.code === 'Enter') && !isRolling && !disabled) {
-        // Prevent default spacebar scrolling
-        if (e.code === 'Space') e.preventDefault();
+      // Ignore keypresses if typing inside text inputs, textareas, or selects
+      const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+
+      const isSpace = e.key === ' ' || e.key === 'Spacebar' || e.code === 'Space';
+      const isEnter = e.key === 'Enter' || e.code === 'Enter';
+
+      if ((isSpace || isEnter) && !isRolling && !disabled) {
+        e.preventDefault();
         rollDice();
       }
     };
+
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [rollDice, isRolling, disabled]);
@@ -85,14 +92,17 @@ export const D20Dice: React.FC<D20DiceProps> = ({ onRollComplete, disabled }) =>
       </button>
 
       {/* Keyboard Hint */}
-      <span className="text-[10px] text-[#8a7852] font-semibold">
-        💡 Pressione <kbd className="px-1.5 py-0.5 rounded bg-[#3a2810] text-[#ffe082] border border-[#816835]">Espaço</kbd> ou <kbd className="px-1.5 py-0.5 rounded bg-[#3a2810] text-[#ffe082] border border-[#816835]">Enter</kbd> para rolar
-      </span>
+      <div className="flex items-center gap-1 text-[11px] text-[#8a7852] font-semibold bg-[#060403] px-3 py-1 rounded border border-[#3a2810]">
+        <span>💡 Atalhos ativados: Pressione</span>
+        <kbd className="px-1.5 py-0.5 rounded bg-[#3a2810] text-[#ffe082] border border-[#816835] font-mono text-[10px]">Espaço</kbd>
+        <span>ou</span>
+        <kbd className="px-1.5 py-0.5 rounded bg-[#3a2810] text-[#ffe082] border border-[#816835] font-mono text-[10px]">Enter</kbd>
+      </div>
 
       {/* Result Type Badge */}
       {resultType && !isRolling && (
         <div
-          className={`px-3 py-1 rounded text-xs font-cinzel font-bold border uppercase animate-bounce ${
+          className={`px-3 py-1 rounded text-xs font-cinzel font-bold border uppercase ${
             resultType === 'miss'
               ? 'bg-red-950 text-red-300 border-red-800'
               : resultType === 'crit'
@@ -120,7 +130,7 @@ export const D20Dice: React.FC<D20DiceProps> = ({ onRollComplete, disabled }) =>
         className="medieval-btn py-2 px-6 text-xs disabled:opacity-50"
       >
         <Sparkles className="w-4 h-4 text-amber-300" />
-        {isRolling ? 'Rolando Dado...' : 'Rolar Dado D20'}
+        {isRolling ? 'Rolando Dado...' : 'Rolar Dado D20 (ou Espaço)'}
       </button>
     </div>
   );

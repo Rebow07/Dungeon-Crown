@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGame, Monster, Item, HuntLog } from '@/lib/gameContext';
-import { Swords, Shield, Heart, Zap, Award, Coins, Sparkles, RefreshCw, AlertCircle, CheckCircle2, Play, Square, Repeat, Hammer, ZapOff } from 'lucide-react';
+import { Swords, Shield, Heart, Zap, Award, Coins, Sparkles, RefreshCw, AlertCircle, CheckCircle2, Play, Square, Repeat, Hammer, ZapOff, Keyboard } from 'lucide-react';
 
 const MONSTERS: Monster[] = [
   {
@@ -100,18 +100,16 @@ export default function HuntPage() {
     return null;
   }
 
-  const runSingleBattle = () => {
+  const runSingleBattle = useCallback(() => {
     const res = executeHunt(selectedMonster);
     setBattleLogs(res.logs);
-  };
+  }, [executeHunt, selectedMonster]);
 
-  const handleTapMonster = (e: React.MouseEvent<HTMLDivElement>) => {
+  const triggerAttackWithFloatingDmg = useCallback((originX?: number, originY?: number) => {
     runSingleBattle();
 
-    // Damage floating text animation
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const x = originX !== undefined ? originX : 120 + Math.random() * 80;
+    const y = originY !== undefined ? originY : 80 + Math.random() * 40;
 
     const id = Date.now() + Math.random();
     setClickDamages((prev) => [...prev.slice(-5), { id, dmg: clickPower, x, y }]);
@@ -120,7 +118,31 @@ export default function HuntPage() {
     setTimeout(() => {
       setClickDamages((prev) => prev.filter((d) => d.id !== id));
     }, 800);
+  }, [runSingleBattle, clickPower]);
+
+  const handleTapMonster = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    triggerAttackWithFloatingDmg(x, y);
   };
+
+  // Keyboard Shortcuts: Press C, Spacebar or Enter to Attack
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+
+      const isAttackKey = e.key === 'c' || e.key === 'C' || e.key === ' ' || e.key === 'Spacebar' || e.code === 'Space' || e.key === 'Enter';
+      if (isAttackKey) {
+        if (e.key === ' ' || e.code === 'Space') e.preventDefault();
+        triggerAttackWithFloatingDmg();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [triggerAttackWithFloatingDmg]);
 
   const handleStartRepeatHunt = () => {
     if (isRepeating) {
@@ -157,7 +179,7 @@ export default function HuntPage() {
     return () => {
       if (timer) clearInterval(timer);
     };
-  }, [isRepeating, remainingRepeats, energy, gold, selectedMonster]);
+  }, [isRepeating, remainingRepeats, energy, gold, runSingleBattle, restInTavern]);
 
   return (
     <div className="space-y-6">
@@ -167,7 +189,7 @@ export default function HuntPage() {
           <h1 className="font-cinzel text-2xl font-bold text-[#ffe082] flex items-center gap-2">
             <Swords className="w-6 h-6 text-amber-400" /> Caça & Clicker Idle RPG
           </h1>
-          <p className="text-xs text-[#8a7852]">Clique no monstro para atacar manualmente ou ative a repetição automática.</p>
+          <p className="text-xs text-[#8a7852]">Clique no monstro ou aperte <kbd className="px-1 py-0.5 rounded bg-[#3a2810] text-[#ffe082] border border-[#816835] font-mono text-[10px]">C</kbd> / <kbd className="px-1 py-0.5 rounded bg-[#3a2810] text-[#ffe082] border border-[#816835] font-mono text-[10px]">Espaço</kbd> para atacar!</p>
         </div>
 
         {/* Repeat Controls */}
@@ -205,6 +227,12 @@ export default function HuntPage() {
             </span>
           </button>
         </div>
+      </div>
+
+      {/* Keyboard Shortcut Banner */}
+      <div className="flex items-center gap-2 bg-[#060403] border border-[#816835] px-3 py-2 rounded-lg text-xs text-[#ffe082]">
+        <Keyboard className="w-4 h-4 text-amber-400" />
+        <span>Atalhos de Caça Rápida: Pressione <kbd className="px-1.5 py-0.5 rounded bg-[#3a2810] text-[#ffe082] border border-[#816835] font-mono text-[10px]">C</kbd>, <kbd className="px-1.5 py-0.5 rounded bg-[#3a2810] text-[#ffe082] border border-[#816835] font-mono text-[10px]">Espaço</kbd> ou <kbd className="px-1.5 py-0.5 rounded bg-[#3a2810] text-[#ffe082] border border-[#816835] font-mono text-[10px]">Enter</kbd> para atacar!</span>
       </div>
 
       {/* Stats Bar (Click Power & DPS) */}
@@ -278,7 +306,7 @@ export default function HuntPage() {
           <div className="medieval-card p-6">
             <div className="text-center pb-3 border-b border-[#3a2810]">
               <h3 className="font-cinzel text-xl font-bold text-[#ffe082]">{selectedMonster.name}</h3>
-              <p className="text-xs text-[#8a7852]">Clique na imagem do monstro para aplicar golpe imediato!</p>
+              <p className="text-xs text-[#8a7852]">Clique na imagem do monstro ou pressione <kbd className="px-1 py-0.5 rounded bg-[#3a2810] text-[#ffe082] border border-[#816835]">C</kbd> no teclado para atacar!</p>
             </div>
 
             {/* Interactive Tap Display Box */}
@@ -290,7 +318,7 @@ export default function HuntPage() {
                 {selectedMonster.image}
               </div>
               <p className="text-xs font-cinzel font-bold text-amber-400 mt-2">
-                ⚔️ CLIQUE PARA ATACAR (-5 EP por caça)
+                ⚔️ CLIQUE OU PRESSIONE 'C' / ESPAÇO PARA ATACAR
               </p>
 
               {/* Floating Damage Text Popup Numbers */}
@@ -314,7 +342,7 @@ export default function HuntPage() {
               <div className="h-44 bg-[#060403] border border-[#3a2810] rounded-lg p-3 overflow-y-auto space-y-2 font-mono text-xs">
                 {battleLogs.length === 0 ? (
                   <div className="h-full flex items-center justify-center text-[#6a5a38] text-center italic">
-                    Clique na imagem do monstro para desferir o primeiro golpe!
+                    Clique no monstro ou aperte 'C' / Espaço para desferir o primeiro golpe!
                   </div>
                 ) : (
                   battleLogs.map((log, i) => (
