@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGame, Quest, Pet } from '@/lib/gameContext';
 import { Coffee, CheckCircle2, Award, Coins, Gem, Sparkles, Heart, Zap, Flame, UserPlus, Shield, Keyboard } from 'lucide-react';
@@ -26,21 +26,53 @@ export default function TavernaPage() {
     dps
   } = useGame();
 
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  const restRef = useRef(restInTavern);
+  const hpRef = useRef(hp);
+  const maxHpRef = useRef(maxHp);
+  const energyRef = useRef(energy);
+  const maxEnergyRef = useRef(maxEnergy);
+  const goldRef = useRef(gold);
+
+  useEffect(() => {
+    restRef.current = restInTavern;
+    hpRef.current = hp;
+    maxHpRef.current = maxHp;
+    energyRef.current = energy;
+    maxEnergyRef.current = maxEnergy;
+    goldRef.current = gold;
+  });
+
   // Keyboard shortcut listener: Press T or B to rest in Tavern
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
       if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
 
-      const isRestKey = e.key === 't' || e.key === 'T' || e.key === 'b' || e.key === 'B';
-      if (isRestKey && gold >= 20 && (hp < maxHp || energy < maxEnergy)) {
-        restInTavern();
+      const code = e.code;
+      const key = e.key ? e.key.toLowerCase() : '';
+
+      const isTKey = code === 'KeyT' || key === 't';
+      const isBKey = code === 'KeyB' || key === 'b';
+
+      if (isTKey || isBKey) {
+        if (goldRef.current < 20) {
+          setToastMsg('🪙 Ouro insuficiente para o Banquete (necessário 20 Ouro)!');
+        } else if (hpRef.current >= maxHpRef.current && energyRef.current >= maxEnergyRef.current) {
+          setToastMsg('🍗 Seu HP e Energia já estão 100% cheios!');
+        } else {
+          restRef.current();
+          setToastMsg('🍗 Banquete servido! HP e Energia 100% restaurados!');
+        }
+
+        setTimeout(() => setToastMsg(null), 2500);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [restInTavern, gold, hp, maxHp, energy, maxEnergy]);
+  }, []);
 
   if (!isLoggedIn) {
     if (typeof window !== 'undefined') router.push('/');
@@ -60,6 +92,12 @@ export default function TavernaPage() {
         </h1>
         <p className="text-xs text-[#8a7852]">Contrate guerreiros para aumentar seu DPS Automático, desfrute de banquetes e aceite contratos.</p>
       </div>
+
+      {toastMsg && (
+        <div className="p-3 rounded-lg bg-amber-950/80 border border-amber-500 text-[#ffe082] text-xs font-bold flex items-center gap-2 animate-pulse">
+          <Keyboard className="w-4 h-4 text-amber-400" /> {toastMsg}
+        </div>
+      )}
 
       {/* Banquet Rest Card */}
       <div className="medieval-card p-5 flex flex-col sm:flex-row items-center justify-between gap-4">

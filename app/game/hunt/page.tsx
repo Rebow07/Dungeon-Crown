@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGame, Monster, Item, HuntLog } from '@/lib/gameContext';
 import { Swords, Shield, Heart, Zap, Award, Coins, Sparkles, RefreshCw, AlertCircle, CheckCircle2, Play, Square, Repeat, Hammer, ZapOff, Keyboard } from 'lucide-react';
@@ -75,11 +75,8 @@ export default function HuntPage() {
     isLoggedIn,
     energy,
     executeHunt,
-    isAutoBattle,
-    toggleAutoBattle,
     restInTavern,
     gold,
-    equippedPet,
     clickPower,
     clickUpgradeCost,
     upgradeClickPower,
@@ -90,6 +87,7 @@ export default function HuntPage() {
   const [battleLogs, setBattleLogs] = useState<HuntLog[]>([]);
   const [clickDamages, setClickDamages] = useState<{ id: number; dmg: number; x: number; y: number }[]>([]);
   const [clickCount, setClickCount] = useState(0);
+  const [lastKeyPressed, setLastKeyPressed] = useState<string | null>(null);
 
   const [repeatOption, setRepeatOption] = useState<number | 'infinite'>(5);
   const [remainingRepeats, setRemainingRepeats] = useState<number>(0);
@@ -120,6 +118,12 @@ export default function HuntPage() {
     }, 800);
   }, [runSingleBattle, clickPower]);
 
+  // Use a Ref to ensure the keyboard handler always has fresh access to the attack callback
+  const attackRef = useRef(triggerAttackWithFloatingDmg);
+  useEffect(() => {
+    attackRef.current = triggerAttackWithFloatingDmg;
+  }, [triggerAttackWithFloatingDmg]);
+
   const handleTapMonster = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -127,22 +131,32 @@ export default function HuntPage() {
     triggerAttackWithFloatingDmg(x, y);
   };
 
-  // Keyboard Shortcuts: Press C, Spacebar or Enter to Attack
+  // Robust Keydown Listener using e.code and e.key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
       if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
 
-      const isAttackKey = e.key === 'c' || e.key === 'C' || e.key === ' ' || e.key === 'Spacebar' || e.code === 'Space' || e.key === 'Enter';
-      if (isAttackKey) {
-        if (e.key === ' ' || e.code === 'Space') e.preventDefault();
-        triggerAttackWithFloatingDmg();
+      const code = e.code;
+      const key = e.key ? e.key.toLowerCase() : '';
+
+      const isCKey = code === 'KeyC' || key === 'c';
+      const isSpaceKey = code === 'Space' || key === ' ' || key === 'spacebar';
+      const isEnterKey = code === 'Enter' || key === 'enter';
+
+      if (isCKey || isSpaceKey || isEnterKey) {
+        if (isSpaceKey) e.preventDefault();
+        attackRef.current();
+
+        const keyLabel = isCKey ? 'Tecla C' : isSpaceKey ? 'Barra de Espaço' : 'Tecla Enter';
+        setLastKeyPressed(keyLabel);
+        setTimeout(() => setLastKeyPressed(null), 1200);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [triggerAttackWithFloatingDmg]);
+  }, []);
 
   const handleStartRepeatHunt = () => {
     if (isRepeating) {
@@ -229,10 +243,17 @@ export default function HuntPage() {
         </div>
       </div>
 
-      {/* Keyboard Shortcut Banner */}
-      <div className="flex items-center gap-2 bg-[#060403] border border-[#816835] px-3 py-2 rounded-lg text-xs text-[#ffe082]">
-        <Keyboard className="w-4 h-4 text-amber-400" />
-        <span>Atalhos de Caça Rápida: Pressione <kbd className="px-1.5 py-0.5 rounded bg-[#3a2810] text-[#ffe082] border border-[#816835] font-mono text-[10px]">C</kbd>, <kbd className="px-1.5 py-0.5 rounded bg-[#3a2810] text-[#ffe082] border border-[#816835] font-mono text-[10px]">Espaço</kbd> ou <kbd className="px-1.5 py-0.5 rounded bg-[#3a2810] text-[#ffe082] border border-[#816835] font-mono text-[10px]">Enter</kbd> para atacar!</span>
+      {/* Keyboard Shortcut Active Indicator Banner */}
+      <div className="flex items-center justify-between bg-[#060403] border border-[#816835] px-3.5 py-2 rounded-lg text-xs text-[#ffe082]">
+        <div className="flex items-center gap-2">
+          <Keyboard className="w-4 h-4 text-amber-400" />
+          <span>Atalhos de Caça Rápida: Pressione <kbd className="px-1.5 py-0.5 rounded bg-[#3a2810] text-[#ffe082] border border-[#816835] font-mono text-[10px]">C</kbd>, <kbd className="px-1.5 py-0.5 rounded bg-[#3a2810] text-[#ffe082] border border-[#816835] font-mono text-[10px]">Espaço</kbd> ou <kbd className="px-1.5 py-0.5 rounded bg-[#3a2810] text-[#ffe082] border border-[#816835] font-mono text-[10px]">Enter</kbd></span>
+        </div>
+        {lastKeyPressed && (
+          <span className="px-2 py-0.5 rounded bg-amber-500 text-black font-bold text-[10px] animate-pulse">
+            ⚡ {lastKeyPressed} Pressionada!
+          </span>
+        )}
       </div>
 
       {/* Stats Bar (Click Power & DPS) */}

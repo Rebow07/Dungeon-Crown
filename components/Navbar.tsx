@@ -1,12 +1,41 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useGame } from '@/lib/gameContext';
-import { Shield, Heart, Zap, Coins, Gem, LogOut, Crown, User } from 'lucide-react';
+import { Shield, Heart, Zap, Coins, Gem, LogOut, Crown, User, Keyboard } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter, usePathname } from 'next/navigation';
 
 export const Navbar: React.FC = () => {
+  const router = useRouter();
+  const pathname = usePathname();
   const { isLoggedIn, name, level, hp, maxHp, energy, maxEnergy, gold, gems, characterClass, customAvatarUrl, equippedPet, logout } = useGame();
+
+  // Global Numeric Navigation Shortcuts (1-9)
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+
+      const code = e.code;
+      const key = e.key;
+
+      if (code === 'Digit1' || key === '1') router.push('/game');
+      else if (code === 'Digit2' || key === '2') router.push('/game/hunt');
+      else if (code === 'Digit3' || key === '3') router.push('/game/dungeons');
+      else if (code === 'Digit4' || key === '4') router.push('/game/taverna');
+      else if (code === 'Digit5' || key === '5') router.push('/game/shop');
+      else if (code === 'Digit6' || key === '6') router.push('/game/inventory');
+      else if (code === 'Digit7' || key === '7') router.push('/game/forge');
+      else if (code === 'Digit8' || key === '8') router.push('/game/ranking');
+      else if (code === 'Digit9' || key === '9') router.push('/game/settings');
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [isLoggedIn, router]);
 
   if (!isLoggedIn) return null;
 
